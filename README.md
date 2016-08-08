@@ -6,13 +6,6 @@ in Unity 5.
 **This Toolkit requires the [SteamVR Plugin]
 from the Unity Asset Store to be imported into your Unity project.**
 
-  > _To all those lovely people who want to give donations, instead of_
-  > _donating, consider supporting me by buying my latest game on_
-  > _Steam - `Holodaze` for HTC Vive. At least this way, I make a bit of_
-  > _money and you get something to play!_
-  >
-  > **[Buy Holodaze from the Steam Store](http://store.steampowered.com/app/475520)**
-  
 ## Games, Apps and Experiences that use this Toolkit
 
  * Games
@@ -107,11 +100,12 @@ guidelines see the [Contribution Document].
 
 ## License
 
-Code released under the MIT license.
+Code released under the [MIT License].
 
 [SteamVR Plugin]: https://www.assetstore.unity3d.com/en/#!/content/32647
 [SteamVR Plugin for Unity3d Github Repo]: https://github.com/ValveSoftware/openvr/tree/master/unity_package/Assets/SteamVR
 [Catlike Coding]: http://catlikecoding.com/unity/tutorials/curves-and-splines/
+[MIT License]: https://github.com/thestonefox/SteamVR_Unity_Toolkit/blob/master/LICENSE
 [Contribution Document]: https://github.com/thestonefox/SteamVR_Unity_Toolkit/blob/master/CONTRIBUTING.md
 [DOCUMENTATION.md]: https://github.com/thestonefox/SteamVR_Unity_Toolkit/blob/master/DOCUMENTATION.md
 [Fork]: http://help.github.com/fork-a-repo/

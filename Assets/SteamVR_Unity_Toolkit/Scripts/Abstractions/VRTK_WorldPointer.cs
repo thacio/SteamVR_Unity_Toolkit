@@ -63,7 +63,7 @@ namespace VRTK
 
         public virtual bool CanActivate()
         {
-            return (activateDelayTimer <= 0);
+            return (Time.time >= activateDelayTimer);
         }
 
         public virtual void ToggleBeam(bool state)
@@ -117,6 +117,7 @@ namespace VRTK
 
         protected virtual void OnDisable()
         {
+            ToggleBeam(false);
             controller.AliasPointerOn -= new ControllerInteractionEventHandler(EnablePointerBeam);
             controller.AliasPointerOff -= new ControllerInteractionEventHandler(DisablePointerBeam);
             controller.AliasPointerSet -= new ControllerInteractionEventHandler(SetPointerDestination);
@@ -129,11 +130,6 @@ namespace VRTK
 
         protected virtual void Update()
         {
-            if (activateDelayTimer > 0)
-            {
-                activateDelayTimer -= Time.deltaTime;
-            }
-
             if (playAreaCursor && playAreaCursor.activeSelf)
             {
                 UpdateCollider();
@@ -182,7 +178,9 @@ namespace VRTK
             OnDestinationMarkerEnter(SetDestinationMarkerEvent(pointerContactDistance, pointerContactTarget, destinationPosition, controllerIndex));
 
             interactableObject = pointerContactTarget.GetComponent<VRTK_InteractableObject>();
-            if (interactableObject && interactableObject.pointerActivatesUseAction && interactableObject.holdButtonToUse)
+            bool cannotUseBecauseNotGrabbed = (interactableObject && interactableObject.useOnlyIfGrabbed && !interactableObject.IsGrabbed());
+
+            if (interactableObject && interactableObject.pointerActivatesUseAction && interactableObject.holdButtonToUse && !cannotUseBecauseNotGrabbed)
             {
                 interactableObject.StartUsing(gameObject);
             }
@@ -205,12 +203,12 @@ namespace VRTK
 
         protected virtual void PointerSet()
         {
-            if (!enabled || !destinationSetActive || !pointerContactTarget || activateDelayTimer > 0)
+            if (!enabled || !destinationSetActive || !pointerContactTarget || !CanActivate())
             {
                 return;
             }
 
-            activateDelayTimer = activateDelay;
+            activateDelayTimer = Time.time + activateDelay;
 
             var interactableObject = pointerContactTarget.GetComponent<VRTK_InteractableObject>();
             if (interactableObject && interactableObject.pointerActivatesUseAction)
@@ -281,7 +279,7 @@ namespace VRTK
 
         private void TurnOnBeam(uint index)
         {
-            if (enabled && !isActive && activateDelayTimer <= 0)
+            if (enabled && !isActive && CanActivate())
             {
                 setPlayAreaCursorCollision(false);
                 controllerIndex = index;

@@ -30,6 +30,7 @@ namespace VRTK
 
         private Joint controllerAttachJoint;
         private GameObject grabbedObject = null;
+        private bool updatedHideControllerOnGrab = false;
 
         private SteamVR_TrackedObject trackedController;
         private VRTK_InteractTouch interactTouch;
@@ -303,6 +304,19 @@ namespace VRTK
             return false;
         }
 
+        private bool GrabClimbObject()
+        {
+            if (grabbedObject == null && IsObjectGrabbable(interactTouch.GetTouchedObject()))
+            {
+                InitGrabbedObject();
+                if (grabbedObject)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
         private void InitGrabbedObject()
         {
             grabbedObject = interactTouch.GetTouchedObject();
@@ -328,9 +342,10 @@ namespace VRTK
                 {
                     grabbedObjectScript.ToggleKinematic(true);
                 }
+                updatedHideControllerOnGrab = grabbedObjectScript.CheckHideMode(hideControllerOnGrab, grabbedObjectScript.hideControllerOnGrab );
             }
 
-            if (hideControllerOnGrab)
+            if (updatedHideControllerOnGrab)
             {
                 Invoke("HideController", hideControllerDelay);
             }
@@ -365,6 +380,14 @@ namespace VRTK
             }
         }
 
+        private void UngrabClimbObject()
+        {
+            if (grabbedObject != null)
+            {
+                InitUngrabbedObject();
+            }
+        }
+
         private void InitUngrabbedObject()
         {
             OnControllerUngrabInteractableObject(interactTouch.SetControllerInteractEvent(grabbedObject));
@@ -374,18 +397,18 @@ namespace VRTK
                 grabbedObject.GetComponent<VRTK_InteractableObject>().ToggleHighlight(false);
             }
 
-            if (hideControllerOnGrab)
+            if (updatedHideControllerOnGrab)
             {
                 controllerActions.ToggleControllerModel(true, grabbedObject);
             }
 
+            grabEnabledState = 0;
             grabbedObject = null;
         }
 
         private void ReleaseObject(uint controllerIndex, bool withThrow)
         {
             UngrabInteractedObject(controllerIndex, withThrow);
-            grabEnabledState = 0;
         }
 
         private GameObject GetGrabbableObject()
@@ -418,6 +441,10 @@ namespace VRTK
                 {
                     initialGrabAttempt = GrabTrackedObject();
                 }
+                else if (objectToGrab.GetComponent<VRTK_InteractableObject>().AttachIsClimbObject())
+                {
+                    initialGrabAttempt = GrabClimbObject();
+                }
                 else
                 {
                     initialGrabAttempt = GrabInteractedObject();
@@ -434,7 +461,7 @@ namespace VRTK
             }
             else
             {
-                grabPrecognitionTimer = grabPrecognition;
+                grabPrecognitionTimer = Time.time + grabPrecognition;
                 if (createRigidBodyWhenNotTouching)
                 {
                     interactTouch.ToggleControllerRigidBody(true);
@@ -454,6 +481,10 @@ namespace VRTK
                 if (grabbedObject.GetComponent<VRTK_InteractableObject>().AttachIsTrackObject())
                 {
                     UngrabTrackedObject();
+                }
+                else if (grabbedObject.GetComponent<VRTK_InteractableObject>().AttachIsClimbObject())
+                {
+                    UngrabClimbObject();
                 }
                 else
                 {
@@ -480,12 +511,15 @@ namespace VRTK
                 SetControllerAttachPoint();
             }
 
-            if (grabPrecognitionTimer > 0)
+            if (grabPrecognitionTimer >= Time.time)
             {
-                grabPrecognitionTimer--;
                 if (GetGrabbableObject() != null)
                 {
                     AttemptGrabObject();
+                    if (GetGrabbedObject() != null)
+                    {
+                        grabPrecognitionTimer = 0f;
+                    }
                 }
             }
         }
