@@ -24,12 +24,14 @@ namespace VRTK
         public float hideControllerDelay = 0f;
         public Color globalTouchHighlightColor = Color.clear;
         public GameObject customRigidbodyObject;
+        public bool triggerOnStaticObjects = false;
 
         public event ObjectInteractEventHandler ControllerTouchInteractableObject;
         public event ObjectInteractEventHandler ControllerUntouchInteractableObject;
 
         private GameObject touchedObject = null;
         private GameObject lastTouchedObject = null;
+        private bool updatedHideControllerOnTouch = false;
 
         private SteamVR_TrackedObject trackedController;
         private VRTK_ControllerActions controllerActions;
@@ -130,6 +132,7 @@ namespace VRTK
 
             Utilities.SetPlayerObject(gameObject, VRTK_PlayerObject.ObjectTypes.Controller);
             CreateTouchCollider(gameObject);
+            CreateTouchRigidBody(gameObject);
             CreateControllerRigidBody();
             triggerRumble = false;
         }
@@ -178,11 +181,12 @@ namespace VRTK
                     return;
                 }
 
+                updatedHideControllerOnTouch = touchedObjectScript.CheckHideMode(hideControllerOnTouch, touchedObjectScript.hideControllerOnTouch);
                 OnControllerTouchInteractableObject(SetControllerInteractEvent(touchedObject));
                 touchedObjectScript.ToggleHighlight(true, globalTouchHighlightColor);
                 touchedObjectScript.StartTouching(gameObject);
 
-                if (controllerActions.IsControllerVisible() && hideControllerOnTouch)
+                if (controllerActions.IsControllerVisible() && updatedHideControllerOnTouch)
                 {
                     Invoke("HideController", hideControllerDelay);
                 }
@@ -238,7 +242,7 @@ namespace VRTK
                 untouched.GetComponent<VRTK_InteractableObject>().StopTouching(gameObject);
             }
 
-            if (hideControllerOnTouch)
+            if (updatedHideControllerOnTouch)
             {
                 controllerActions.ToggleControllerModel(true, touchedObject);
             }
@@ -263,6 +267,22 @@ namespace VRTK
             BoxCollider bc = obj.AddComponent<BoxCollider>();
             bc.size = size;
             bc.center = center;
+        }
+
+        private void CreateTouchRigidBody(GameObject obj)
+        {
+            // Need a Rigidbody to interact with static objects
+            if (triggerOnStaticObjects)
+            {
+                Rigidbody rb = obj.GetComponent<Rigidbody>();
+                if (rb==null)
+                {
+                    rb = obj.AddComponent<Rigidbody>();
+                }
+
+                rb.isKinematic = true;
+                rb.useGravity = false;
+            }
         }
 
         private void HideController()
